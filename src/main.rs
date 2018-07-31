@@ -44,7 +44,7 @@ fn read(login: &mut Vec<((String, String, String, String, String))>) -> Result<(
 }
 // }}}
 fn main() {
-    // init dotenv
+    // init .env file
     dotenv().ok();
     // init vecs
     let mut login = vec![];
@@ -190,30 +190,31 @@ fn ssh(ip: String, user: String, pass: String) {
 // }}}
 // sso {{{
 fn sso(ip: String, user: String) {
+    let blan = format!("expect -c 'spawn ssh pspinc@216.230.243.243;expect \"pspinc\";send \"ssh {}@{}\n\"", user, ip);
+    let lan = format!("expect -c 'spawn ssh {}@{}", user, ip);
+    let interact = String::from(";interact'");
     let slice = &ip[0..2];
     match slice.as_ref() {
         "10" => match user.as_ref() {
             "pspinc" | "psp" => {
                 let command = format!(
-                "expect -c 'spawn ssh pspinc@216.230.243.243;expect \"pspinc\";send \"ssh {}@{}\n\";interact'", user, ip);
-                // println!("{}", command);
-                // requires #![allow(unused_must_use)] to not return error with .unwrap()
+                "{}{}", blan, interact);
                 cmd!("bash", "-c", command).run();
             }
             "root" => {
-                let command = format!("expect -c 'spawn ssh pspinc@216.230.243.243;expect \"pspinc\";send \"ssh {}@{}\n\";interact'", user, ip);
+                let command = format!("{}{}", blan, interact);
                 cmd!("bash", "-c", command).run();
             }
             _ => println!("Cannot handle user"),
         },
         _ => match user.as_ref() {
             "pspinc" | "psp" => {
-                let command = format!("expect -c 'spawn ssh {}@{};interact'", user, ip);
-                cmd!("sh", "-c", command).run();
+                let command = format!("{}{}", lan, interact);
+                cmd!("bash", "-c", command).run();
             }
             "root" => {
-                let command = format!("expect -c 'spawn ssh {}@{};interact'", user, ip);
-                cmd!("sh", "-c", command).run();
+                let command = format!("{}{}", lan, interact);
+                cmd!("bash", "-c", command).run();
             }
             _ => (),
         },
@@ -227,25 +228,24 @@ fn rd(ip: String, user: String, pass: String) {
     match slice.as_ref() {
         "10" => {
             let command = format!(
-                "ssh -f -N -D9050 pspinc@216.230.243.243; proxychains rdesktop -g 1300x708 -5 -K -r disk:sharename=/home/fish/Documents/sync -u {} -p '{}' {}",
+                "ssh -f -N -D9050 pspinc@216.230.243.243; proxychains rdesktop -g 1300x708 -u {} -p '{}' {}",
+                // "ssh -f -N -D9050 pspinc@216.230.243.243; proxychains rdesktop -g 1300x708 -5 -K -r disk:sharename=/home/fish/Documents/sync -u {} -p '{}' {}",
                 user, pass, ip
             );
             // println!("{}", command);
-            cmd!("bash", "-c", command).run();
+            cmd!("sh", "-c", command).run();
         }
         _ => {
             let command = format!(
-                "rdesktop -g 1300x708 -5 -K -r clipboard:CLIPBOARD -u {} -p '{}' {}",
+                "rdesktop -g 1300x708 -u {} -p '{}' {}",
+                // "rdesktop -g 1300x708 -5 -K -r clipboard:CLIPBOARD -u {} -p '{}' {}",
                 user, pass, ip
             );
             // println!("{}", command);
-            cmd!("bash", "-c", command).run();
+            cmd!("sh", "-c", command).run();
         }
     }
 }
-// }}}
-// test {{{
-//
 // }}}
 // tools {{{
 fn build() {
